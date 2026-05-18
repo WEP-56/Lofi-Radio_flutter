@@ -41,7 +41,7 @@
 - ➕ 自定义电台 — 支持 mp3/m3u8 流媒体链接
 - 🎨 深色沉浸主题 — 深靛蓝 + 暖铜色，玻璃质感控件
 
-## 使用提示
+## 同意这些权限以获取完整体验
 
 <table>
   <tr>
@@ -53,7 +53,7 @@
 
 ## 需要 Windows / Mac 版？
 
-直接前往 [lofi radio](https://github.com/labilio/lofi-radio) 获得优秀的 PC 电台体验。
+直接前往 [lofi radio](https://github.com/labilio/lofi-radio/release) 获得优秀的 PC 电台体验。
 
 ## 寻找更多电台？
 
