@@ -1,0 +1,43 @@
+name: lofi_radio_flutter
+description: Lofi Radio Player - Android Edition
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  just_audio: ^0.9.43
+  audio_service: ^0.18.17
+  shared_preferences: ^2.5.3
+  flutter_overlay_window: ^0.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter:
+  uses-material-design: true
+
+  # fonts:
+  #   - family: Inter
+  #     fonts:
+  #       - asset: assets/fonts/Inter-Regular.ttf
+  #         weight: 400
+  #       - asset: assets/fonts/Inter-Medium.ttf
+  #         weight: 500
+  #       - asset: assets/fonts/Inter-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/Inter-Bold.ttf
+  #         weight: 700
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/fonts/logo.png"
+  adaptive_icon_background: "#0F1729"
+  adaptive_icon_foreground: "assets/fonts/logo.png"

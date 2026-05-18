@@ -1,0 +1,31 @@
+# 原版 electron 项目（子模块，不纳入此仓库）
+lofi-radio/
+
+# Flutter
+lofi-radio-flutter/.dart_tool/
+lofi-radio-flutter/.idea/
+lofi-radio-flutter/build/
+lofi-radio-flutter/.flutter-plugins
+lofi-radio-flutter/.flutter-plugins-dependencies
+lofi-radio-flutter/.packages
+lofi-radio-flutter/pubspec.lock
+
+# Android
+lofi-radio-flutter/android/.gradle/
+lofi-radio-flutter/android/app/lofi-radio-release.jks
+lofi-radio-flutter/android/key.properties
+lofi-radio-flutter/android/local.properties
+lofi-radio-flutter/android/app/build/
+
+# iOS (not used but just in case)
+lofi-radio-flutter/ios/Flutter/Flutter.framework
+lofi-radio-flutter/ios/Flutter/Flutter.podspec
+
+# IDE
+*.iml
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
