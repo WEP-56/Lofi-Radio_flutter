@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>流体玻璃电台 - 音量轨高精优化版</title>
+    <style>
+        :root {
+            --bg-color: #0d131f;
+            --accent-color: #ffaa33;
+            --glass-base: rgba(255, 255, 255, 0.02); 
+            --text-main: #e2e8f0;
+            --text-muted: #52647c;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle at 50% 30%, #1e2d42 0%, var(--bg-color) 75%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        .phone-container {
+            width: 390px;
+            height: 844px;
+            background: linear-gradient(180deg, #141c28 0%, #090d15 100%);
+            border-radius: 44px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+            position: relative;
+            padding: 35px 28px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 黑胶区域 */
+        .vinyl-section {
+            margin-top: 30px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .vinyl-wrapper {
+            position: relative;
+            width: 230px;
+            height: 230px;
+            margin: 0 auto 25px;
+        }
+
+        .vinyl-glow {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle, rgba(255,170,51,0.12) 0%, transparent 65%);
+            transform: scale(1.5);
+        }
+
+        .vinyl-disc {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #2a1e15 18%, #111 19%, #181818 40%, #030303 85%);
+            border-radius: 50%;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: rotate 25s linear infinite;
+        }
+
+        .vinyl-center {
+            width: 75px;
+            height: 75px;
+            background: #c58f49;
+            border-radius: 50%;
+            border: 5px solid #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 11px;
+            color: #111;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .track-info h2 {
+            font-size: 25px;
+            margin: 10px 0 6px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .track-info p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* 一体化无界玻璃板 */
+        .glass-monoblock {
+            width: 100%;
+            margin-top: auto;
+            margin-bottom: 15px;
+            background: var(--glass-base);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border-radius: 36px;
+            padding: 32px 24px;
+            box-sizing: border-box;
+            border: none; 
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1.5px 3px rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 40px; /* 拉大间距，给音量轨充足的视觉呼吸空间 */
+        }
+
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        /* 原生浇筑凸起按键 */
+        .cast-btn-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .molded-btn {
+            flex: 1;
+            height: 82px;
+            border-radius: 24px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: none;
+            background: rgba(255, 255, 255, 0.01); 
+            box-shadow: 
+                -6px -6px 20px rgba(255, 255, 255, 0.04), 
+                8px 8px 22px rgba(0, 0, 0, 0.5),
+                inset 1px 1px 2px rgba(255, 255, 255, 0.05),
+                inset -1px -1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .molded-btn:hover {
+            box-shadow: 
+                -8px -8px 25px rgba(255, 255, 255, 0.06), 
+                10px 10px 28px rgba(0, 0, 0, 0.6),
+                inset 2px 2px 4px rgba(255, 255, 255, 0.08);
+            transform: scale(1.02);
+        }
+
+        .molded-btn:active, .molded-btn.active {
+            transform: scale(0.98);
+            background: rgba(0, 0, 0, 0.1);
+            box-shadow: 
+                -2px -2px 10px rgba(255, 255, 255, 0.01),
+                2px 2px 10px rgba(0, 0, 0, 0.2),
+                inset 3px 3px 10px rgba(0, 0, 0, 0.6),
+                inset -3px -3px 10px rgba(255, 255, 255, 0.02);
+        }
+
+        .glow-dot {
+            width: 4px;
+            height: 4px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            position: absolute;
+            top: 14px;
+            transition: all 0.3s;
+        }
+
+        .molded-btn.active .glow-dot {
+            background: var(--accent-color);
+            box-shadow: 0 0 12px var(--accent-color), 0 0 4px var(--accent-color);
+        }
+
+        .btn-icon {
+            font-size: 15px;
+            margin-top: 10px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .molded-btn.active .btn-icon {
+            color: #fff;
+            text-shadow: 0 0 8px rgba(255,255,255,0.6);
+        }
+
+        .btn-label {
+            font-size: 10px;
+            margin-top: 6px;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 1.5px;
+        }
+
+        /* ==================== 优化核心：多层雕刻音量轨 ==================== */
+        .volume-section {
+            width: 100%;
+        }
+
+        .vol-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .vol-value {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-color);
+            background: rgba(255, 170, 51, 0.08);
+            padding: 2px 8px;
+            border-radius: 8px;
+            text-shadow: 0 0 6px rgba(255, 170, 51, 0.3);
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .vol-icon {
+            font-size: 15px;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        .slider-track-wrapper {
+            flex: 1;
+            position: relative;
+            height: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 1层：在大玻璃表面上铣出的浅层舒缓凹陷（过渡带） */
+        .molded-track-outer {
+            position: absolute;
+            width: 100%;
+            height: 22px;
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 11px;
+            box-shadow: 
+                inset 1px 1px 3px rgba(0, 0, 0, 0.3),
+                1px 1px 2px rgba(255, 255, 255, 0.03);
+            display: flex;
+            align-items: center;
+            padding: 0 4px;
+            box-sizing: border-box;
+        }
+
+        /* 2层：在凹陷中央切出的深层核心槽 */
+        .molded-track-inner-bg {
+            width: 100%;
+            height: 10px;
+            background: rgba(5, 8, 14, 0.75);
+            border-radius: 5px;
+            box-shadow: 
+                inset 2px 2px 5px rgba(0, 0, 0, 0.9),
+                inset -1px -1px 2px rgba(255, 255, 255, 0.02);
+            position: relative;
+            overflow: hidden; /* 锁死荧光液体不外溢 */
+        }
+
+        /* 3层：凹槽里流动的“有源液体荧光” */
+        .molded-track-fill-fluid {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 51%;
+            /* 浓郁的渐变橙色，更具沉浸厚重感 */
+            background: linear-gradient(90deg, #945305 0%, #ff8800 70%, #ffaa33 100%);
+            border-radius: 5px;
+            /* 核心：液体内发光与外散射 */
+            box-shadow: 
+                0 0 14px rgba(255, 136, 0, 0.6),
+                inset 0 1px 1px rgba(255, 255, 255, 0.4);
+        }
+
+        /* 4层：水银胶囊熔铸滑块 */
+        .molded-thumb-capsule {
+            position: absolute;
+            left: 51%;
+            transform: translateX(-50%);
+            /* 改为精致的竖向厚重胶囊造型 */
+            width: 14px;
+            height: 28px;
+            border-radius: 7px;
+            background: rgba(255, 255, 255, 0.06);
+            
+            /* 极重的实心玻璃折射光影 */
+            box-shadow: 
+                -4px -4px 12px rgba(255, 255, 255, 0.07), /* 左上迎光面 */
+                5px 5px 15px rgba(0, 0, 0, 0.7),          /* 右下投射影 */
+                inset 1px 1.5px 2px rgba(255, 255, 255, 0.3), /* 内部上沿挂光 */
+                inset -1px -1px 2px rgba(0, 0, 0, 0.5);
+            
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .molded-thumb-capsule:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-50%) scale(1.05);
+        }
+
+        /* 滑块中心埋入的一缕极细垂直核心晶丝 */
+        .molded-thumb-capsule::after {
+            content: '';
+            width: 2px;
+            height: 14px;
+            background: #fff;
+            border-radius: 1px;
+            opacity: 0.7;
+            box-shadow: 0 0 4px #fff;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        <div class="vinyl-section">
+            <div class="vinyl-wrapper">
+                <div class="vinyl-glow"></div>
+                <div class="vinyl-disc">
+                    <div class="vinyl-center">Lofi Box</div>
+                </div>
+            </div>
+            <div class="track-info">
+                <h2>Lofi Box</h2>
+                <p>Lo-fi · Chill · Preset</p>
+            </div>
+        </div>
+
+        <div class="glass-monoblock">
+            
+            <div>
+                <div class="section-title">Transport</div>
+                <div class="cast-btn-group">
+                    <div class="molded-btn">
+                        <div class="glow-dot"></div>
+                        <div class="btn-icon">◀◀</div>
+                        <div class="btn-label">PREV</div>
+                    </div>
+                    <div class="molded-btn active">
+                        <div class="glow-dot"></div>
+                        <div class="btn-icon">‖</div>
+                        <div class="btn-label">PAUSE</div>
+                    </div>
+                    <div class="molded-btn">
+                        <div class="glow-dot"></div>
+                        <div class="btn-icon">▶▶</div>
+                        <div class="btn-label">NEXT</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="volume-section">
+                <div class="vol-header">
+                    <div class="section-title">Volume</div>
+                    <div class="vol-value">51%</div>
+                </div>
+                <div class="volume-container">
+                    <div class="vol-icon">🔊</div>
+                    <div class="slider-track-wrapper">
+                        <div class="molded-track-outer">
+                            <div class="molded-track-inner-bg">
+                                <div class="molded-track-fill-fluid"></div>
+                            </div>
+                        </div>
+                        <div class="molded-thumb-capsule"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,49 +1,49 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:audio_service/audio_service.dart';
-import '../models/station.dart';
-import '../data/default_stations.dart';
 
-/// 音频播放服务 — 整合 just_audio + audio_service
-///
-/// 提供：
-/// - 通知栏媒体控制（播放/暂停/上下首）
-/// - 锁屏控制
-/// - 蓝牙耳机按键响应
-/// - 单一数据源状态管理
+import '../data/default_stations.dart';
+import '../models/station.dart';
+import 'station_repository.dart';
+
 class AudioPlayerService {
   AudioPlayerService._();
+
   static final AudioPlayerService instance = AudioPlayerService._();
 
-  LofiAudioHandler? _handler;
+  static const _androidBufferWindow = Duration(seconds: 12);
+  static const _androidMaxBufferWindow = Duration(seconds: 24);
+  static const _rebufferWindow = Duration(seconds: 6);
 
-  // ─── 状态通知 ───
+  LofiAudioHandler? _handler;
+  final StationRepository _stationRepository = StationRepository.instance;
+
   final ValueNotifier<bool> isPlaying = ValueNotifier(false);
+  final ValueNotifier<bool> isBuffering = ValueNotifier(false);
   final ValueNotifier<double> volume = ValueNotifier(0.3);
   final ValueNotifier<int> currentIndex = ValueNotifier(0);
   final ValueNotifier<Station?> currentStation = ValueNotifier(null);
-  final ValueNotifier<List<Station>> stations = ValueNotifier(defaultStations);
+  final ValueNotifier<List<Station>> customStations = ValueNotifier(const []);
+  final ValueNotifier<List<Station>> stations = ValueNotifier(
+    List<Station>.unmodifiable(defaultStations),
+  );
 
   bool _initialized = false;
 
   AudioPlayer? get player => _handler?.player;
 
-  /// 初始化：注册 AudioService，启动通知栏
   Future<void> init() async {
     if (_initialized) return;
     _initialized = true;
 
+    await _loadStations();
+
     _handler = await AudioService.init(
       builder: () => LofiAudioHandler(
         onPlayStateChanged: (playing) => isPlaying.value = playing,
-        onIndexChanged: (index) {
-          currentIndex.value = index;
-          if (index >= 0 && index < stations.value.length) {
-            currentStation.value = stations.value[index];
-          }
-        },
+        onBufferingStateChanged: (buffering) => isBuffering.value = buffering,
       ),
-      config: AudioServiceConfig(
+      config: const AudioServiceConfig(
         androidNotificationChannelId: 'com.lofiradio.audio',
         androidNotificationChannelName: 'Lofi Radio',
         androidNotificationOngoing: true,
@@ -53,16 +53,38 @@ class AudioPlayerService {
 
     await _handler!.player.setVolume(volume.value);
 
-    // 开箱即用：启动即播放
     if (stations.value.isNotEmpty) {
       await playStation(0);
     }
   }
 
-  /// 切换播放/暂停
+  Future<void> _loadStations() async {
+    final loadedCustomStations = await _stationRepository.loadCustomStations();
+    customStations.value = List<Station>.unmodifiable(loadedCustomStations);
+    _refreshMergedStations();
+  }
+
+  void _refreshMergedStations() {
+    stations.value = List<Station>.unmodifiable([
+      ...defaultStations,
+      ...customStations.value,
+    ]);
+
+    if (stations.value.isEmpty) {
+      currentIndex.value = 0;
+      currentStation.value = null;
+      return;
+    }
+
+    final nextIndex = currentIndex.value.clamp(0, stations.value.length - 1);
+    currentIndex.value = nextIndex;
+    currentStation.value = stations.value[nextIndex];
+  }
+
   Future<void> togglePlayPause() async {
     final handler = _handler;
     if (handler == null) return;
+
     if (handler.player.playing) {
       await handler.pause();
     } else {
@@ -70,7 +92,6 @@ class AudioPlayerService {
     }
   }
 
-  /// 播放指定电台
   Future<void> playStation(int index) async {
     if (index < 0 || index >= stations.value.length) return;
     final handler = _handler;
@@ -80,47 +101,92 @@ class AudioPlayerService {
     currentStation.value = stations.value[index];
     final station = stations.value[index];
 
+    final subtitle = [
+      station.style1,
+      station.style2,
+    ].where((value) => value.trim().isNotEmpty).join(' · ');
+
     final mediaItem = MediaItem(
       id: station.url,
       title: station.name,
-      artist: '${station.style1} · ${station.style2}',
-      album: 'Lofi Radio',
+      artist: subtitle.isEmpty ? station.category : subtitle,
+      album: station.isUserStation ? 'Custom Station' : 'Lofi Radio',
       extras: {'index': index},
     );
 
     await handler.playFromStation(mediaItem);
   }
 
-  /// 下一个电台
   Future<void> nextStation() async {
+    if (stations.value.isEmpty) return;
     final next = (currentIndex.value + 1) % stations.value.length;
     await playStation(next);
   }
 
-  /// 上一个电台
   Future<void> previousStation() async {
+    if (stations.value.isEmpty) return;
     final prev =
-        (currentIndex.value - 1 + stations.value.length) % stations.value.length;
+        (currentIndex.value - 1 + stations.value.length) %
+        stations.value.length;
     await playStation(prev);
   }
 
-  /// 设置音量
   Future<void> setVolume(double v) async {
     volume.value = v.clamp(0.0, 1.0);
     await _handler?.player.setVolume(volume.value);
   }
 
-  /// 添加自定义电台
-  void addStation(Station station) {
-    stations.value = [...stations.value, station];
+  Future<void> addStation(Station station) async {
+    final customStation = station.copyWith(isUserStation: true);
+    final updated = [...customStations.value, customStation];
+    customStations.value = List<Station>.unmodifiable(updated);
+    _refreshMergedStations();
+    await _stationRepository.saveCustomStations(updated);
   }
 
-  /// 移除电台
-  void removeStation(int index) {
+  Future<void> removeStation(int index) async {
     if (index < 0 || index >= stations.value.length) return;
-    final list = [...stations.value];
-    list.removeAt(index);
-    stations.value = list;
+
+    final station = stations.value[index];
+    if (!station.isUserStation) return;
+
+    final updated = customStations.value
+        .where(
+          (item) =>
+              !(item.url == station.url &&
+                  item.name == station.name &&
+                  item.isUserStation),
+        )
+        .toList(growable: false);
+
+    customStations.value = List<Station>.unmodifiable(updated);
+    _refreshMergedStations();
+    await _stationRepository.saveCustomStations(updated);
+
+    if (stations.value.isEmpty) return;
+
+    if (index == currentIndex.value) {
+      final fallbackIndex = currentIndex.value.clamp(
+        0,
+        stations.value.length - 1,
+      );
+      await playStation(fallbackIndex);
+      return;
+    }
+
+    if (index < currentIndex.value) {
+      currentIndex.value = (currentIndex.value - 1).clamp(
+        0,
+        stations.value.length - 1,
+      );
+      currentStation.value = stations.value[currentIndex.value];
+    }
+  }
+
+  Future<void> resetCustomStations() async {
+    customStations.value = const [];
+    _refreshMergedStations();
+    await _stationRepository.clearCustomStations();
   }
 
   Future<void> dispose() async {
@@ -128,36 +194,58 @@ class AudioPlayerService {
   }
 }
 
-/// AudioHandler — 处理通知栏/锁屏/蓝牙的媒体控制
 class LofiAudioHandler extends BaseAudioHandler with SeekHandler {
-  final AudioPlayer player = AudioPlayer();
+  final AudioPlayer player = AudioPlayer(
+    audioLoadConfiguration: const AudioLoadConfiguration(
+      darwinLoadControl: DarwinLoadControl(
+        automaticallyWaitsToMinimizeStalling: true,
+        preferredForwardBufferDuration: Duration(seconds: 10),
+        canUseNetworkResourcesForLiveStreamingWhilePaused: true,
+      ),
+      androidLoadControl: AndroidLoadControl(
+        minBufferDuration: AudioPlayerService._androidBufferWindow,
+        maxBufferDuration: AudioPlayerService._androidMaxBufferWindow,
+        bufferForPlaybackDuration: Duration(seconds: 2),
+        bufferForPlaybackAfterRebufferDuration:
+            AudioPlayerService._rebufferWindow,
+        prioritizeTimeOverSizeThresholds: true,
+      ),
+    ),
+  );
+
   final void Function(bool playing) onPlayStateChanged;
-  final void Function(int index) onIndexChanged;
+  final void Function(bool buffering) onBufferingStateChanged;
 
   LofiAudioHandler({
     required this.onPlayStateChanged,
-    required this.onIndexChanged,
+    required this.onBufferingStateChanged,
   }) {
-    // 监听播放状态，同步到通知栏
     player.playerStateStream.listen((state) {
-      final playing = state.playing;
-      onPlayStateChanged(playing);
+      onPlayStateChanged(state.playing);
+      onBufferingStateChanged(
+        state.processingState == ProcessingState.loading ||
+            state.processingState == ProcessingState.buffering,
+      );
       _broadcastState();
     });
 
-    // 监听处理状态（加载中/就绪/错误）
-    player.processingStateStream.listen((_) {
+    player.processingStateStream.listen((processingState) {
+      onBufferingStateChanged(
+        processingState == ProcessingState.loading ||
+            processingState == ProcessingState.buffering,
+      );
       _broadcastState();
     });
   }
 
-  /// 播放指定电台
   Future<void> playFromStation(MediaItem item) async {
-    // 更新通知栏显示的媒体信息
     mediaItem.add(item);
 
     try {
-      await player.setAudioSource(AudioSource.uri(Uri.parse(item.id)));
+      await player.setAudioSource(
+        AudioSource.uri(Uri.parse(item.id), tag: item),
+        preload: true,
+      );
       await player.play();
     } catch (e) {
       debugPrint('Failed to play station "${item.title}": $e');
@@ -182,37 +270,36 @@ class LofiAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> skipToNext() async {
-    final service = AudioPlayerService.instance;
-    await service.nextStation();
+    await AudioPlayerService.instance.nextStation();
   }
 
   @override
   Future<void> skipToPrevious() async {
-    final service = AudioPlayerService.instance;
-    await service.previousStation();
+    await AudioPlayerService.instance.previousStation();
   }
 
-  /// 广播当前播放状态到系统（通知栏/锁屏）
   void _broadcastState() {
     final playing = player.playing;
     final processingState = player.processingState;
 
-    playbackState.add(PlaybackState(
-      controls: [
-        MediaControl.skipToPrevious,
-        playing ? MediaControl.pause : MediaControl.play,
-        MediaControl.skipToNext,
-      ],
-      systemActions: const {
-        MediaAction.play,
-        MediaAction.pause,
-        MediaAction.skipToNext,
-        MediaAction.skipToPrevious,
-      },
-      androidCompactActionIndices: const [0, 1, 2],
-      processingState: _mapProcessingState(processingState),
-      playing: playing,
-    ));
+    playbackState.add(
+      PlaybackState(
+        controls: [
+          MediaControl.skipToPrevious,
+          playing ? MediaControl.pause : MediaControl.play,
+          MediaControl.skipToNext,
+        ],
+        systemActions: const {
+          MediaAction.play,
+          MediaAction.pause,
+          MediaAction.skipToNext,
+          MediaAction.skipToPrevious,
+        },
+        androidCompactActionIndices: const [0, 1, 2],
+        processingState: _mapProcessingState(processingState),
+        playing: playing,
+      ),
+    );
   }
 
   AudioProcessingState _mapProcessingState(ProcessingState state) {

@@ -18,6 +18,7 @@ class AppColors {
   static const Color accent = Color(0xFFFFDAB9); // rgba(255, 218, 185)
   static const Color accentDim = Color(0xB3FFDAB9); // 70% opacity
   static const Color accentSubtle = Color(0x33FFDAB9); // 20% opacity
+  static const Color signalPeak = Color(0xFFF7B955);
 
   // ─── 文字层级 ───
   static const Color textPrimary = Color(0xF2F8FAFC); // 95%
@@ -31,10 +32,21 @@ class AppColors {
 
   // ─── 标签色 ───
   static const Color tagDefault = Color(0x1AFFFFFF);
+  static const Color tagPresetBg = Color(0x143FA2FF);
+  static const Color tagPresetText = Color(0xFFD8ECFF);
   static const Color tagCustomBg = Color(0x33FFDAB9);
   static const Color tagCustomText = Color(0xF2FFDAB9);
   static const Color tagSceneBg = Color(0x336495ED);
   static const Color tagSceneText = Color(0xF2ADD8E6);
+
+  // Console deck
+  static const Color consoleTop = Color(0xFF485567);
+  static const Color consoleSurface = Color(0xFF27313E);
+  static const Color consoleBottom = Color(0xFF131A24);
+  static const Color consoleEdge = Color(0xFF64748B);
+  static const Color consoleKnobTop = Color(0xFFD9E0E7);
+  static const Color consoleKnobMid = Color(0xFF96A3B4);
+  static const Color consoleKnobBottom = Color(0xFF3C4654);
 
   // ─── 黑胶唱片 ───
   static const Color vinylDark = Color(0xFF0F0F0F);

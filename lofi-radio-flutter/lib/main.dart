@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 import 'theme/app_theme.dart';
 import 'theme/app_colors.dart';
 import 'pages/home_page.dart';
@@ -11,20 +12,20 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 沉浸式状态栏 + 导航栏
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: AppColors.backgroundDeep,
-    systemNavigationBarIconBrightness: Brightness.light,
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: AppColors.backgroundDeep,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
 
   // 竖屏锁定
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   // 异步初始化服务
-  AudioPlayerService.instance.init();
+  unawaited(AudioPlayerService.instance.init());
   FocusTimerService.instance.init();
 
   runApp(const LofiRadioApp());

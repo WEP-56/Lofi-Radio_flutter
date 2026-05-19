@@ -7,10 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 @pragma("vm:entry-point")
 void overlayEntry() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: OverlayWidget(),
-  ));
+  runApp(
+    const MaterialApp(debugShowCheckedModeBanner: false, home: OverlayWidget()),
+  );
 }
 
 class OverlayWidget extends StatefulWidget {
@@ -31,7 +30,9 @@ class _OverlayWidgetState extends State<OverlayWidget> {
       if (data is Map) {
         setState(() {
           if (data.containsKey('playing')) _isPlaying = data['playing'] as bool;
-          if (data.containsKey('station')) _stationName = data['station'] as String;
+          if (data.containsKey('station')) {
+            _stationName = data['station'] as String;
+          }
         });
       }
     });
@@ -57,7 +58,10 @@ class _OverlayWidgetState extends State<OverlayWidget> {
                   gradient: const LinearGradient(
                     colors: [Color(0xE61E2A3B), Color(0xF20F1729)],
                   ),
-                  border: Border.all(color: const Color(0x2694A3B8), width: 0.5),
+                  border: Border.all(
+                    color: const Color(0x2694A3B8),
+                    width: 0.5,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.3),
@@ -71,7 +75,9 @@ class _OverlayWidgetState extends State<OverlayWidget> {
                   children: [
                     // 播放/暂停
                     _btn(
-                      icon: _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      icon: _isPlaying
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
                       onTap: _doTogglePlay,
                       accent: true,
                     ),
@@ -105,7 +111,11 @@ class _OverlayWidgetState extends State<OverlayWidget> {
     );
   }
 
-  Widget _btn({required IconData icon, required VoidCallback onTap, bool accent = false}) {
+  Widget _btn({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool accent = false,
+  }) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -130,14 +140,20 @@ class _OverlayWidgetState extends State<OverlayWidget> {
   void _doTogglePlay() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('overlay_action', 'togglePlay');
-    await prefs.setInt('overlay_action_ts', DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt(
+      'overlay_action_ts',
+      DateTime.now().millisecondsSinceEpoch,
+    );
     setState(() => _isPlaying = !_isPlaying);
   }
 
   void _doNext() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('overlay_action', 'next');
-    await prefs.setInt('overlay_action_ts', DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt(
+      'overlay_action_ts',
+      DateTime.now().millisecondsSinceEpoch,
+    );
   }
 
   void _doClose() {

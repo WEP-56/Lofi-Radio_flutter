@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
-enum TagType { style, custom, scene }
+enum TagType { style, preset, custom, scene }
 
 /// 电台标签组件 — 复刻原版标签设计
 class StationTag extends StatelessWidget {
   final String text;
   final TagType type;
 
-  const StationTag({
-    super.key,
-    required this.text,
-    this.type = TagType.style,
-  });
+  const StationTag({super.key, required this.text, this.type = TagType.style});
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +36,8 @@ class StationTag extends StatelessWidget {
     switch (type) {
       case TagType.style:
         return AppColors.tagDefault;
+      case TagType.preset:
+        return AppColors.tagPresetBg;
       case TagType.custom:
         return AppColors.tagCustomBg;
       case TagType.scene:
@@ -51,6 +49,8 @@ class StationTag extends StatelessWidget {
     switch (type) {
       case TagType.style:
         return AppColors.textSecondary;
+      case TagType.preset:
+        return AppColors.tagPresetText;
       case TagType.custom:
         return AppColors.tagCustomText;
       case TagType.scene:
@@ -62,6 +62,8 @@ class StationTag extends StatelessWidget {
     switch (type) {
       case TagType.style:
         return Colors.transparent;
+      case TagType.preset:
+        return const Color(0xFF3FA2FF).withValues(alpha: 0.24);
       case TagType.custom:
         return AppColors.accent.withValues(alpha: 0.3);
       case TagType.scene:
